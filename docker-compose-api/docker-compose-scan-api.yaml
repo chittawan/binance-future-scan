@@ -1,0 +1,22 @@
+version: '3.8'
+
+x-bot-api-base: &bot-api-base
+  image: registry.codewalk.myds.me/binance-futures-scan-api:${API_TAG}
+  restart: unless-stopped
+  environment:
+    TRADING_CONFIG_DIR: /app/trading_config.json
+  mem_limit: 1536m
+  # cpus: 1.5  # Commented out: kernel does not support CPU CFS scheduler
+
+services:
+  bot-scan-api:
+    <<: *bot-api-base
+    container_name: binance-future-api-scan-8500
+    ports:
+      - "8500:8500"
+    environment:
+      PORT: 8500
+      CONTAINER_NAME: binance-future-api-scan-8500
+    volumes:
+      - /volume1/docker/bot-future-config/futurebot-api-scan/trading_config.json:/app/trading_config.json:rw
+  

@@ -60,13 +60,13 @@ class PoolSignalService:
     BASE_REST = "https://fapi.binance.com"
     BASE_WS = "wss://fstream.binance.com/ws"
     MAX_BAR = 100  # Maximum number of bars to keep
-    WS_IDLE_TIMEOUT = 30  # ถ้าไม่มี msg เกิน 60s → reconnect
+    WS_IDLE_TIMEOUT = 60  # ถ้าไม่มี msg เกิน 60s → reconnect
     WS_RECONNECT_DELAY = 5  # Delay before reconnecting
     WS_HEARTBEAT = 20  # WebSocket heartbeat interval
 
     # HTTP Timeout Constants
     HTTP_CONNECT_TIMEOUT = 10  # seconds - time to wait for connection establishment
-    HTTP_READ_TIMEOUT = 30  # seconds - time to wait for response data
+    HTTP_READ_TIMEOUT = 60  # seconds - time to wait for response data
     HTTP_TOTAL_TIMEOUT = 60  # seconds - total request time limit
 
     # Initial Load Constants
@@ -245,7 +245,7 @@ class PoolSignalService:
             ):
                 symbols.append(symbol_info["symbol"])
 
-        self.symbols = sorted(symbols[:50])  # Sort for consistency
+        self.symbols = sorted(symbols)  # Sort for consistency
         self.total_symbols = len(self.symbols)
 
         log.info(
