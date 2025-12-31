@@ -102,6 +102,10 @@ class PoolSignalService:
         self._process_locks: dict[str, asyncio.Lock] = {}
         # Lock to safely access _process_locks dict
         self._process_locks_lock = asyncio.Lock()
+        # Status tracking for initialization
+        # idle, wait_for_fetch_symbol, wait_for_rest, wait_for_ws, completed
+        self._status: str = "idle"
+        self._start_task: asyncio.Task | None = None
 
     def _interval_ms(self) -> int:
         m = self.config.SIGNAL_INTERVAL
@@ -123,10 +127,51 @@ class PoolSignalService:
                 "⚠ PoolSignalService is already running, stopping first...")
             await self.stop()
 
-        # Fetch symbols from Binance exchangeInfo
-        await self.fetch_symbols()
-        await self.initial_load()
-        await self.start_ws()
+        # Cancel existing start task if any
+        if self._start_task is not None and not self._start_task.done():
+            self._start_task.cancel()
+            try:
+                await self._start_task
+            except asyncio.CancelledError:
+                pass
+
+        # Start initialization as background task
+        self._start_task = asyncio.create_task(self._start_background())
+
+    async def _start_background(self):
+        """Background task that runs initialization steps with status tracking."""
+        try:
+            # Fetch symbols from Binance exchangeInfo
+            self._status = "wait_for_fetch_symbol"
+            log.info("📡 Status: %s", self._status)
+            await self.fetch_symbols()
+
+            # Initial load (REST)
+            self._status = "wait_for_rest"
+            log.info("📡 Status: %s", self._status)
+            await self.initial_load()
+
+            # Start WebSocket connections
+            self._status = "wait_for_ws"
+            log.info("📡 Status: %s", self._status)
+            await self.start_ws()
+
+            # Completed
+            self._status = "completed"
+            log.info(
+                "✅ Status: %s - PoolSignalService initialization complete", self._status)
+        except asyncio.CancelledError:
+            log.info("🛑 Start background task cancelled")
+            self._status = "idle"
+            raise
+        except Exception as e:  # noqa: BLE001
+            log.error("❌ Error during initialization: %s", e, exc_info=True)
+            self._status = "idle"
+            raise
+
+    def get_status(self) -> str:
+        """Get the current initialization status."""
+        return self._status
 
     # =========================================================
     # Fetch symbols from Binance
@@ -200,7 +245,7 @@ class PoolSignalService:
             ):
                 symbols.append(symbol_info["symbol"])
 
-        self.symbols = sorted(symbols[:10])  # Sort for consistency
+        self.symbols = sorted(symbols)  # Sort for consistency
         self.total_symbols = len(self.symbols)
 
         log.info(
@@ -805,6 +850,15 @@ class PoolSignalService:
     async def stop(self):
         log.info("🛑 Stopping PoolSignalService")
 
+        # Cancel start background task if running
+        if self._start_task is not None and not self._start_task.done():
+            self._start_task.cancel()
+            try:
+                await self._start_task
+            except asyncio.CancelledError:
+                pass
+            self._start_task = None
+
         # Cancel all tasks
         for task in self._ws_tasks:
             if not task.done():
@@ -826,6 +880,7 @@ class PoolSignalService:
         self._minute_updates.clear()
         self._minute_start_times.clear()
         self._process_locks.clear()
+        self._status = "idle"
         log.info("✅ PoolSignalService stopped")
 
     def update_config(self, config: TradingConfigModel, limit: int = 100):
@@ -841,6 +896,8 @@ class PoolSignalService:
         self._minute_updates.clear()
         self._minute_start_times.clear()
         self._process_locks.clear()
+        # Reset status
+        self._status = "idle"
         # Ensure _last_log_timestamp is initialized
         if not hasattr(self, '_last_log_timestamp') or self._last_log_timestamp is None:
             self._last_log_timestamp = time.time()

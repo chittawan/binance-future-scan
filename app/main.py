@@ -1,3 +1,9 @@
+"""
+Main application file for the Binance Futures Connector.
+
+This module initializes the FastAPI application, sets up logging,
+configures CORS, and manages startup and shutdown events.
+"""
 import asyncio
 import logging
 from app.api.router import router
@@ -41,6 +47,14 @@ app.include_router(router, prefix="/api/v1")
 
 @app.on_event("startup")
 async def startup_event():
+    """
+    Startup event handler for the FastAPI application.
+
+    This function:
+    1. Gets the trading configuration from the trading_config_service
+    2. Creates a pool signal service instance with the configuration
+    3. Starts the pool signal service
+    """
     from app.services.trading_config_service import trading_config_service
     config = trading_config_service.get()
     _pool_signal_sv = get_pool_signal_service(config)
@@ -49,4 +63,11 @@ async def startup_event():
 
 @app.on_event("shutdown")
 async def shutdown_event():
+    """
+    Shutdown event handler for the FastAPI application.
+
+    This function:
+    1. Shuts down the pool signal service
+    2. Sleeps for 10 seconds
+    """
     asyncio.sleep(10)

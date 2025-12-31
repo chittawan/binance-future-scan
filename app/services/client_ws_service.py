@@ -88,7 +88,7 @@ class ClientWebSocketService:
                 self._polling_task = asyncio.create_task(self._polling_loop())
 
     async def _polling_loop(self):
-        """Background task to poll data every 5 seconds when no trigger"""
+        """Background task to poll data every 60 seconds when no trigger"""
         # Wait a bit for callbacks to be registered if polling started early
         if (len(self._callbacks["scan_signal"]) == 0):
             await asyncio.sleep(2.0)
@@ -96,7 +96,8 @@ class ClientWebSocketService:
         try:
             while self._connection_initialized:
                 try:
-                    await asyncio.sleep(self._polling_interval)
+                    interval = 60.0
+                    await asyncio.sleep(interval)
 
                     current_time = asyncio.get_event_loop().time()
                     time_since_last_pull = current_time - self._last_pull_time
@@ -107,7 +108,7 @@ class ClientWebSocketService:
                         await asyncio.sleep(1.0)
                         continue
 
-                    if not self._trigger_pending and time_since_last_pull >= self._polling_interval:
+                    if not self._trigger_pending and time_since_last_pull >= interval:
                         await self._scan_signal_pull_and_send_all_data()
 
                 except asyncio.CancelledError:
