@@ -13,7 +13,7 @@ from collections import defaultdict, deque
 from datetime import datetime
 
 from app.models.trading_config_model import TradingConfigModel
-from app.services.signal_service.scan_signal_service import ScanSignalService
+from app.services.signal_service.scan_signal_service_v2 import ScanSignalServiceV2
 
 log = logging.getLogger(__name__.split(".")[-1])
 
@@ -87,7 +87,7 @@ class PoolSignalService:
         self.klines = defaultdict(lambda: deque(maxlen=self.MAX_BAR))
 
         self._ws_tasks: list[asyncio.Task] = []
-        self._scan_signal_service = ScanSignalService()
+        self._scan_signal_service = ScanSignalServiceV2()
         # Track minute updates for summary logging
         self._minute_updates: dict[int, set[str]] = {}
         self._last_logged_minute: int | None = None
@@ -245,7 +245,7 @@ class PoolSignalService:
             ):
                 symbols.append(symbol_info["symbol"])
 
-        self.symbols = sorted(symbols)  # Sort for consistency
+        self.symbols = sorted(symbols[:50])  # Sort for consistency
         self.total_symbols = len(self.symbols)
 
         log.info(
@@ -1070,13 +1070,10 @@ class PoolSignalService:
                     config=self.config
                 )
 
-                if signals and signals.get("sig") and signals["sig"].get("type"):
-                    # Add symbol to the signal dict
-                    signal_with_symbol = {
-                        "symbol": symbol,
-                        **signals
-                    }
-                    signals_list.append(signal_with_symbol)
+                # ScanResult
+                if signals and signals.state != "NONE":
+                    logging.info("🔍 Signals for %s: %s", symbol, signals)
+                    signals_list.append(signals)
 
             except Exception as e:  # noqa: BLE001
                 log.error(
