@@ -58,6 +58,9 @@ class TradingConfigService:
                 del data["BINANCE_FUTURE_API_KEY"]
             if "BINANCE_FUTURE_API_SECRET" in data:
                 del data["BINANCE_FUTURE_API_SECRET"]
+            # Ensure CLIENT_CONFIGS exists (for backward compatibility)
+            if "CLIENT_CONFIGS" not in data:
+                data["CLIENT_CONFIGS"] = []
             self._config = TradingConfigModel(**data)
             self.save_config()
 

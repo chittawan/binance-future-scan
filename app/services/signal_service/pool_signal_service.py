@@ -184,6 +184,7 @@ class PoolSignalService:
         - status == "TRADING"
         - quoteAsset == "USDT"
         """
+        SYMBOL_LIMIT = 50
         log.info("📡 Fetching Binance Futures symbols from exchangeInfo...")
 
         url = f"{self.BASE_REST}/fapi/v1/exchangeInfo"
@@ -244,7 +245,10 @@ class PoolSignalService:
                 and symbol_info.get("quoteAsset") == "USDT"
             ):
                 symbols.append(symbol_info["symbol"])
-
+        if SYMBOL_LIMIT > 0:
+            symbols = symbols[:SYMBOL_LIMIT]
+        else:
+            symbols = symbols
         self.symbols = sorted(symbols)  # Sort for consistency
         self.total_symbols = len(self.symbols)
 

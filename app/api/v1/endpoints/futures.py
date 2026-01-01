@@ -371,10 +371,21 @@ async def websocket_client_endpoint(websocket: WebSocket):
                 pool_signal_service = get_pool_signal_service()
                 signals_list = await pool_signal_service.get_all_signals()
 
-                # Send signals list to frontend
+                # Send signals list to frontend in the same format as _broadcast_to_frontend
                 if signals_list:
                     try:
-                        await websocket.send_json(signals_list)
+                        # Convert and normalize data like _broadcast_to_frontend does
+                        data_serializable = _convert_to_json_serializable(
+                            signals_list)
+                        data_normalized = _normalize_binance_websocket_data(
+                            data_serializable)
+
+                        # Send in the same format as _broadcast_to_frontend
+                        message = {
+                            "type": "scan_signal",
+                            "data": data_normalized
+                        }
+                        await websocket.send_json(message)
                     except (WebSocketDisconnect, RuntimeError, ConnectionError) as send_error:
                         logging.warning(
                             "Connection closed while sending initial signals: %s", send_error)

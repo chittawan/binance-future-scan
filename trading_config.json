@@ -30,5 +30,12 @@
   "BINANCE_API_KEY": "6heSq88YRFA0s2vWnLSrKNuWMaOhNRGCweKaTDGODrvNaswtRCtQe2F86QMRl9BL",
   "BINANCE_API_SECRET": "8jJINZDnXL3lwrxuDBipXFNBSnSgUtVbK6STJTL4FSdYP56P8ilnX2vlmPjcW25l",
   "NTFY_URL": "https://ntfy.codewalk.myds.me/binance-notify",
-  "NTFY_TOKEN": "tk_44gewsus4n1sx0b3edaf7c144nn92"
+  "NTFY_TOKEN": "tk_44gewsus4n1sx0b3edaf7c144nn92",
+  "CLIENT_CONFIGS": [
+    {
+      "client_name": "Film",
+      "client_api_key": "12345678",
+      "client_api_base_url": "https://fb-bot-api.codewalk.myds.me"
+    }
+  ]
 }

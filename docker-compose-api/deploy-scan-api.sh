@@ -5,7 +5,7 @@ COMPOSE_FILE="docker-compose-scan-api.yaml"
 API_IMAGE="registry.codewalk.myds.me/binance-futures-scan-api"
 
 API_TAG="$1"
-TARGET="$2"
+TARGET="bot-scan-api"
 shift 2 || true   # service names ที่เหลือ
 
 if [ -z "$API_TAG" ]; then

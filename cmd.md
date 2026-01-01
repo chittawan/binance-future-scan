@@ -1,5 +1,5 @@
 python3 --version
-# Python 3.11
+# Python 3.12
 brew install python@3.12
 brew link python@3.12 --force
 python3.12 -m venv venv312

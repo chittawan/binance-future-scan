@@ -2,6 +2,12 @@ from pydantic import BaseModel, Field
 from typing import Literal, Union, List
 
 
+class ClientConfigSymbol(BaseModel):
+    client_name: str = Field(..., min_length=1)
+    client_api_key: str = Field(..., min_length=1)
+    client_api_base_url: str = Field(..., min_length=1)
+
+
 class TradingConfigModel(BaseModel):
     # SYSTEM
     IS_NOTIFY: bool = False
@@ -42,3 +48,6 @@ class TradingConfigModel(BaseModel):
     BINANCE_API_SECRET: str = ""
     NTFY_URL: str = "https://ntfy.codewalk.myds.me/binance-notify"
     NTFY_TOKEN: str = "tk_44gewsus4n1sx0b3edaf7c144nn92"
+
+    # Client Configs for sending signals to other API clients
+    CLIENT_CONFIGS: List[ClientConfigSymbol] = Field(default_factory=list)

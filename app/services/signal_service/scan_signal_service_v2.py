@@ -17,9 +17,9 @@ class ScanResult:
     # LONG_START, LONG_CONTINUE, SHORT_START, SHORT_CONTINUE, WATCH, NONE
     state: str
     score: int
-    ema_fast: Optional[float]
-    ema_slow: Optional[float]
-    ema_50: Optional[float]
+    ma_fast: Optional[float]
+    ma_slow: Optional[float]
+    ma_50: Optional[float]
     adx: Optional[float]
 
 
@@ -66,15 +66,15 @@ class ScanSignalServiceV2:
         # =========================
         # Indicators
         # =========================
-        ema_fast = ta.ema(close, length=config.SIGNAL_FAST_EMA_PERIOD)
-        ema_slow = ta.ema(close, length=config.SIGNAL_SLOW_EMA_PERIOD)
-        ema_50 = ta.ema(close, length=50)
+        ma_fast = ta.sma(close, length=config.SIGNAL_FAST_EMA_PERIOD)
+        ma_slow = ta.sma(close, length=config.SIGNAL_SLOW_EMA_PERIOD)
+        ma_50 = ta.sma(close, length=50)
 
         adx_df = ta.adx(high, low, close, length=14)
         adx = adx_df["ADX_14"]
 
         # Last values
-        ef, es, e50 = ema_fast.iloc[-1], ema_slow.iloc[-1], ema_50.iloc[-1]
+        ef, es, e50 = ma_fast.iloc[-1], ma_slow.iloc[-1], ma_50.iloc[-1]
         adx_last = adx.iloc[-1]
 
         if np.isnan([ef, es, e50, adx_last]).any():
@@ -89,8 +89,8 @@ class ScanSignalServiceV2:
         # =========================
         # Momentum (Slope)
         # =========================
-        ef_slope = ema_fast.diff().iloc[-1]
-        es_slope = ema_slow.diff().iloc[-1]
+        ef_slope = ma_fast.diff().iloc[-1]
+        es_slope = ma_slow.diff().iloc[-1]
 
         long_momentum = ef_slope > 0 and es_slope > 0
         short_momentum = ef_slope < 0 and es_slope < 0
@@ -103,9 +103,9 @@ class ScanSignalServiceV2:
         # =========================
         # Detect START vs CONTINUE
         # =========================
-        prev_ef = ema_fast.iloc[-2]
-        prev_es = ema_slow.iloc[-2]
-        prev_e50 = ema_50.iloc[-2]
+        prev_ef = ma_fast.iloc[-2]
+        prev_es = ma_slow.iloc[-2]
+        prev_e50 = ma_50.iloc[-2]
 
         prev_long_aligned = prev_ef > prev_es > prev_e50
         prev_short_aligned = prev_ef < prev_es < prev_e50
@@ -172,8 +172,8 @@ class ScanSignalServiceV2:
             trend=trend,
             state=state,
             score=score,
-            ema_fast=float(ef),
-            ema_slow=float(es),
-            ema_50=float(e50),
+            ma_fast=float(ef),
+            ma_slow=float(es),
+            ma_50=float(e50),
             adx=float(adx_last),
         )
