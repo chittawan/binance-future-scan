@@ -35,7 +35,7 @@
     {
       "client_name": "Film",
       "client_api_key": "12345678",
-      "client_api_base_url": "https://fb-bot-api.codewalk.myds.me"
+      "client_api_base_url": "https://fbot-api.codewalk.myds.me"
     }
   ]
 }

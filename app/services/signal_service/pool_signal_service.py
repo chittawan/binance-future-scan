@@ -184,7 +184,7 @@ class PoolSignalService:
         - status == "TRADING"
         - quoteAsset == "USDT"
         """
-        SYMBOL_LIMIT = 50
+        SYMBOL_LIMIT = 0
         log.info("📡 Fetching Binance Futures symbols from exchangeInfo...")
 
         url = f"{self.BASE_REST}/fapi/v1/exchangeInfo"

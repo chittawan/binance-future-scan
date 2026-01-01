@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, Path, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request
 from fastapi.responses import JSONResponse
 from app.services.auth_service import require_auth
 from app.services.trading_config_service import trading_config_service
+from app.services.client_api_service import client_api_service
 from app.models.trading_config_model import ClientConfigSymbol
 from typing import Optional
 import logging
@@ -127,6 +128,7 @@ async def delete_client_config(
 
 @router.post("/config/symbol/push/{symbol}")
 async def push_symbol_to_client(
+    request: Request,
     symbol: str = Path(..., description="Symbol to add (e.g., AERGOUSDT)"),
     client_name: Optional[str] = Query(
         None, description="Optional client name. If not provided, sends to all clients."),
@@ -135,6 +137,7 @@ async def push_symbol_to_client(
     """
     Send symbol signal to client API.
     If client_name is not provided, sends to all clients.
+    Returns summary with status counts for each client.
     """
     try:
         logging.info(f"Pushing symbol {symbol} to client API")
@@ -151,34 +154,37 @@ async def push_symbol_to_client(
         # Normalize symbol to uppercase
         symbol = symbol.upper()
 
-        # TODO: Implement actual API call to client endpoints
-        # For now, just log the action
-        if client_name:
-            client_found = False
-            for client_config in client_configs:
-                if client_config.client_name == client_name:
-                    logging.info(
-                        f"Sending {symbol} to client {client_name} at {client_config.client_api_base_url}")
-                    client_found = True
-                    break
+        # Get Authorization header from request
+        authorization_header = request.headers.get("Authorization", "")
+        if not authorization_header:
+            raise HTTPException(
+                status_code=401,
+                detail="Authorization header is required"
+            )
 
+        # Validate client_name if provided
+        if client_name:
+            client_found = any(
+                client.client_name == client_name
+                for client in client_configs
+            )
             if not client_found:
                 raise HTTPException(
                     status_code=404,
                     detail=f"Client '{client_name}' not found"
                 )
-        else:
-            # Send to all clients
-            for client_config in client_configs:
-                logging.info(
-                    f"Sending {symbol} to client {client_config.client_name} at {client_config.client_api_base_url}")
 
-        return {
-            "success": True,
-            "message": f"Symbol {symbol} sent successfully",
-            "symbol": symbol,
-            "client_name": client_name if client_name else "all clients"
-        }
+        # Call the service to push symbol to clients
+        result = await client_api_service.push_symbol_to_clients(
+            client_configs,
+            symbol,
+            authorization_header,
+            client_name
+        )
+
+        # Return the summary response
+        return result
+
     except HTTPException:
         raise
     except Exception as e:
@@ -191,6 +197,7 @@ async def push_symbol_to_client(
 
 @router.post("/config/symbol/pop/{symbol}")
 async def pop_symbol_from_client(
+    request: Request,
     symbol: str = Path(..., description="Symbol to remove (e.g., AERGOUSDT)"),
     client_name: Optional[str] = Query(
         None, description="Optional client name. If not provided, sends to all clients."),
@@ -199,6 +206,7 @@ async def pop_symbol_from_client(
     """
     Send symbol removal signal to client API.
     If client_name is not provided, sends to all clients.
+    Returns summary with status counts for each client.
     """
     try:
         logging.info(f"Popping symbol {symbol} from client API")
@@ -215,34 +223,37 @@ async def pop_symbol_from_client(
         # Normalize symbol to uppercase
         symbol = symbol.upper()
 
-        # TODO: Implement actual API call to client endpoints
-        # For now, just log the action
-        if client_name:
-            client_found = False
-            for client_config in client_configs:
-                if client_config.client_name == client_name:
-                    logging.info(
-                        f"Sending remove {symbol} to client {client_name} at {client_config.client_api_base_url}")
-                    client_found = True
-                    break
+        # Get Authorization header from request
+        authorization_header = request.headers.get("Authorization", "")
+        if not authorization_header:
+            raise HTTPException(
+                status_code=401,
+                detail="Authorization header is required"
+            )
 
+        # Validate client_name if provided
+        if client_name:
+            client_found = any(
+                client.client_name == client_name
+                for client in client_configs
+            )
             if not client_found:
                 raise HTTPException(
                     status_code=404,
                     detail=f"Client '{client_name}' not found"
                 )
-        else:
-            # Send to all clients
-            for client_config in client_configs:
-                logging.info(
-                    f"Sending remove {symbol} to client {client_config.client_name} at {client_config.client_api_base_url}")
 
-        return {
-            "success": True,
-            "message": f"Symbol {symbol} removal sent successfully",
-            "symbol": symbol,
-            "client_name": client_name if client_name else "all clients"
-        }
+        # Call the service to pop symbol from clients
+        result = await client_api_service.pop_symbol_from_clients(
+            client_configs,
+            symbol,
+            authorization_header,
+            client_name
+        )
+
+        # Return the summary response
+        return result
+
     except HTTPException:
         raise
     except Exception as e:
