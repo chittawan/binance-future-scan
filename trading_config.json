@@ -33,8 +33,8 @@
   "NTFY_TOKEN": "tk_44gewsus4n1sx0b3edaf7c144nn92",
   "CLIENT_CONFIGS": [
     {
-      "client_name": "Film",
-      "client_api_key": "12345678",
+      "client_name": "film",
+      "client_api_key": "12345",
       "client_api_base_url": "https://fbot-api.codewalk.myds.me"
     }
   ]
